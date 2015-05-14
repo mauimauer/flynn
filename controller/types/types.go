@@ -9,6 +9,7 @@ import (
 
 	"github.com/flynn/flynn/host/resource"
 	"github.com/flynn/flynn/host/types"
+	"github.com/flynn/flynn/router/types"
 )
 
 type ExpandedFormation struct {
@@ -194,4 +195,9 @@ type LogOpts struct {
 	JobID       string
 	Lines       *int
 	ProcessType *string
+}
+
+type AppDeletion struct {
+	DeletedRoutes    []*router.Route
+	DeletedResources []*Resource
 }

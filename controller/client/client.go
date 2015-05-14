@@ -190,8 +190,37 @@ func (c *Client) UpdateApp(app *ct.App) error {
 }
 
 // DeleteApp deletes an app.
-func (c *Client) DeleteApp(appID string) error {
-	return c.Delete(fmt.Sprintf("/apps/%s", appID))
+func (c *Client) DeleteApp(appID string) (*ct.AppDeletion, error) {
+	var a ct.AppDeletion
+
+	// TODO: do cleanup in a background worker (need to decide how to watch
+	//       events so we know it has been done).
+
+	// remove routes
+	routes, err := c.RouteList(appID)
+	if err != nil {
+		return nil, err
+	}
+	for _, route := range routes {
+		if err := c.DeleteRoute(appID, route.FormattedID()); err != nil {
+			return nil, err
+		}
+	}
+	a.DeletedRoutes = routes
+
+	// remove resources
+	resources, err := c.AppResourceList(appID)
+	if err != nil {
+		return nil, err
+	}
+	for _, resource := range resources {
+		if err := c.DeleteResource(resource.ProviderID, resource.ID); err != nil {
+			return nil, err
+		}
+	}
+	a.DeletedResources = resources
+
+	return &a, c.Delete(fmt.Sprintf("/apps/%s", appID))
 }
 
 // CreateProvider creates a new provider.
